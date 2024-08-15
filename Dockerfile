@@ -56,6 +56,6 @@ RUN useradd -m appuser && chown -R appuser:appuser /app /user_conversations /roo
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 7860
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
