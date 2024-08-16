@@ -19,5 +19,3 @@ aiohttp==3.10.3
 aioimaplib==1.1.0
 PyMuPDF==1.24.5
 PyMuPDFb==1.24.3
-torch==2.2.2
-transformers==4.41.2
