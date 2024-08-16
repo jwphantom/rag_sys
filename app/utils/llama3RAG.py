@@ -2,7 +2,7 @@ from langchain_community.embeddings import GPT4AllEmbeddings
 
 from langchain_community.document_loaders import PyMuPDFLoader
 
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_groq import ChatGroq
 import os
 
@@ -19,9 +19,9 @@ from langchain_community.vectorstores import FAISS
 def setup_embedding_and_llm():
     # Assuming environment variables are used to configure keys
 
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.2, top_p=0.2)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2).bind(logprobs=True)
 
-    embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")
 
     return llm, embedding
 
