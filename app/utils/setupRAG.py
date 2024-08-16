@@ -19,7 +19,7 @@ from langchain_community.vectorstores import FAISS
 def setup_embedding_and_llm():
     # Assuming environment variables are used to configure keys
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2).bind(logprobs=True)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
 
     embedding = OpenAIEmbeddings(model="text-embedding-ada-002")
 

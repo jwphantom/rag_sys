@@ -101,15 +101,18 @@ async def mail_job():
                         reply_body += result["history"]
 
                         # Send the reply
-                        reply_mail(
-                            username,
-                            smtp_password,
-                            from_address,
-                            subject,
-                            email_message["Message-ID"],
-                            email_message["References"],
-                            reply_body,
-                        )
+                        if (result["response"] != "Stop") or (
+                            result["response"] != "ENDCONV"
+                        ):
+                            reply_mail(
+                                username,
+                                smtp_password,
+                                from_address,
+                                subject,
+                                email_message["Message-ID"],
+                                email_message["References"],
+                                reply_body,
+                            )
 
                         logger.info(f"Reply: \n {result['response']} ")
                         logger.info("=" * 40)
