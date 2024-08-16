@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from app.api import chat
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,10 @@ from mail import mail_job
 
 from contextlib import asynccontextmanager
 import asyncio
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -31,6 +36,7 @@ app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Code à exécuter au démarrage
+    logger.info("Démarrage de mail_job")
     task = asyncio.create_task(mail_job())
     yield
     # Code à exécuter à la fermeture
