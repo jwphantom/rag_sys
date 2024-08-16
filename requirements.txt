@@ -19,3 +19,4 @@ aiohttp==3.10.3
 aioimaplib==1.1.0
 PyMuPDF==1.24.5
 PyMuPDFb==1.24.3
+rank-bm25==0.2.2

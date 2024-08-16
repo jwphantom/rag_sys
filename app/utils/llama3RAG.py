@@ -2,7 +2,7 @@ from langchain_community.embeddings import GPT4AllEmbeddings
 
 from langchain_community.document_loaders import PyMuPDFLoader
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_groq import ChatGroq
 import os
 
@@ -14,18 +14,14 @@ from langchain.retrievers import EnsembleRetriever
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 
-import torch
-
 
 # Setup for embedding and LLM
 def setup_embedding_and_llm():
     # Assuming environment variables are used to configure keys
 
-    device = torch.device("cpu")
-
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.2, top_p=0.2)
 
-    embedding = GPT4AllEmbeddings(model_name="all-MiniLM-L6-v2.gguf2.f16.gguf")
+    embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     return llm, embedding
 

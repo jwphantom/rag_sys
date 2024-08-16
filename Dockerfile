@@ -8,6 +8,7 @@ ENV HF_DATASETS_OFFLINE=1
 ENV TF_FORCE_CPU_ALLOW_GROWTH=true
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 
+
 WORKDIR /app
 
 # Copier seulement les fichiers nécessaires pour installer les dépendances
