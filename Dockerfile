@@ -14,9 +14,8 @@ WORKDIR /app
 # Copier seulement les fichiers nécessaires pour installer les dépendances
 COPY requirements.txt .
 
-# Installer les dépendances (forcer les versions CPU si nécessaire)
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt \
-    && pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# Installer les dépendances
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # Étape finale
 FROM python:3.11-slim
@@ -48,6 +47,7 @@ RUN pip install --no-cache /wheels/*
 
 # Copier le reste des fichiers de l'application
 COPY . .
+
 
 # Créer un utilisateur non-root et définir les permissions
 RUN useradd -m appuser && chown -R appuser:appuser /app /user_conversations /root/.cache /usr/local/lib/python3.11/site-packages /usr/local/bin /usr/local
