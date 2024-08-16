@@ -1,5 +1,5 @@
 # Étape de build
-FROM python:3.11-slim as builder
+FROM python:3.11-slim-bullseye as builder
 
 # Définir des variables d'environnement pour désactiver CUDA et forcer le mode CPU
 ENV CUDA_VISIBLE_DEVICES=""
@@ -8,17 +8,17 @@ ENV HF_DATASETS_OFFLINE=1
 ENV TF_FORCE_CPU_ALLOW_GROWTH=true
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 
-
 WORKDIR /app
 
 # Copier seulement les fichiers nécessaires pour installer les dépendances
 COPY requirements.txt .
 
 # Installer les dépendances
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt \
+    && pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 # Étape finale
-FROM python:3.11-slim
+FROM python:3.11-slim-bullseye
 
 # Redéfinir les variables d'environnement dans l'image finale
 ENV CUDA_VISIBLE_DEVICES=""
