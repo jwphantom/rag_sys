@@ -17,9 +17,13 @@ logger = logging.getLogger(__name__)
 
 def generate_prompt(input, pdf_path, history, canal):
 
+    logger.info("llm avant")
+
     llm, _ = setup_embedding_and_llm()
 
     logger.info("llm passée")
+
+    logger.info("retrieve avant")
 
     retriever = create_hybrid_retriever(pdf_path)
 
