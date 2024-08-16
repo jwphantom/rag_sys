@@ -94,9 +94,7 @@ async def mail_job():
                         logger.info(f"Sujet : {subject}")
                         logger.info(f"Date : {envelope.date}")
 
-                        logger.info("Avant l'appel à handle_input")
                         result = await handle_input(email_message)
-                        logger.info("Après l'appel à handle_input")
 
                         # Prepare the reply body
                         reply_body = f"{result['response']}\n"

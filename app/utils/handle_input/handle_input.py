@@ -26,9 +26,7 @@ async def handle_input(content):
 
     if len(parts) < 2:
         if handle_greeting_and_how_are_you(new_request):
-            logger.info("Avant l'appel à reponse greeting < 2")
             response = handle_greeting_and_how_are_you(new_request)
-            logger.info("Après l'appel à reponse greeting < 2")
             mail = True
 
         if handle_response_confirmation_informations(new_request):
@@ -39,9 +37,7 @@ async def handle_input(content):
 
         else:
             mail = True
-            logger.info("Avant l'appel à reponse chat < 2")
             response = await chat(question)
-            logger.info("Avant l'appel à reponse chat < 2")
 
     else:
 
