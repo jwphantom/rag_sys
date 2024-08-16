@@ -34,6 +34,7 @@ def setup_embedding_and_llm():
 
     if embedding is not None:
         logger.info("configuration du modèle LLM reussi")
+
     return llm, embedding
 
 
