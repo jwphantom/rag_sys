@@ -24,9 +24,9 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 
-# @app.on_event("startup")
-# async def start_background_task():
-#     asyncio.create_task(mail_job())
+@app.on_event("startup")
+async def start_background_task():
+    asyncio.create_task(mail_job())
 
 
 @app.get("/")
