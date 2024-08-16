@@ -14,10 +14,14 @@ from langchain.retrievers import EnsembleRetriever
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 
+import torch
+
 
 # Setup for embedding and LLM
 def setup_embedding_and_llm():
     # Assuming environment variables are used to configure keys
+
+    device = torch.device("cpu")
 
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.2, top_p=0.2)
 
