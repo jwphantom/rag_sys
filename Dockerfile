@@ -1,5 +1,5 @@
 # Étape de build
-FROM python:3.11-slim-bullseye as builder
+FROM python:3.11-slim as builder
 
 # Définir des variables d'environnement pour désactiver CUDA et forcer le mode CPU
 ENV CUDA_VISIBLE_DEVICES=""
@@ -8,17 +8,17 @@ ENV HF_DATASETS_OFFLINE=1
 ENV TF_FORCE_CPU_ALLOW_GROWTH=true
 ENV PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 
+
 WORKDIR /app
 
 # Copier seulement les fichiers nécessaires pour installer les dépendances
 COPY requirements.txt .
 
 # Installer les dépendances
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt \
-    && pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # Étape finale
-FROM python:3.11-slim-bullseye
+FROM python:3.11-slim
 
 # Redéfinir les variables d'environnement dans l'image finale
 ENV CUDA_VISIBLE_DEVICES=""
@@ -35,29 +35,23 @@ ENV SMTP_PASSWORD=${SMTP_PASSWORD}
 
 WORKDIR /app
 
-# Créer un utilisateur non-root plus tôt dans l'étape finale
-RUN useradd -m appuser && mkdir -p /app /user_conversations /root/.cache/huggingface && chown -R appuser:appuser /app /user_conversations /root/.cache/huggingface
-
-# Passer à l'utilisateur non-root
-USER appuser
+# Créer le répertoire de cache et définir les permissions
+RUN mkdir -p /.cache /root/.cache /user_conversations && chmod -R 777 /.cache /root/.cache /user_conversations
 
 # Copier les roues de dépendances de l'étape précédente
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 
-# Créer un environnement virtuel et installer les roues de dépendances
-RUN python -m venv /app/venv \
-    && /app/venv/bin/pip install --no-cache /wheels/* \
-    && rm -rf /wheels
-
-# Mettre à jour le PATH pour utiliser l'environnement virtuel
-ENV PATH="/app/venv/bin:$PATH"
+# Installer les roues de dépendances
+RUN pip install --no-cache /wheels/*
 
 # Copier le reste des fichiers de l'application
 COPY . .
 
-# Définir la variable d'environnement pour Hugging Face cache
-ENV HF_HOME=/root/.cache/huggingface
+# Créer un utilisateur non-root et définir les permissions
+RUN useradd -m appuser && chown -R appuser:appuser /app /user_conversations /root/.cache /usr/local/lib/python3.11/site-packages /usr/local/bin /usr/local
+
+USER appuser
 
 EXPOSE 7860
 
