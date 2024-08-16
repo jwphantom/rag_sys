@@ -10,15 +10,24 @@ load_dotenv(".env")
 
 router = APIRouter()
 
+import logging
+
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @router.post("/generate-prompt")
 async def chat(question: SchemaQuestion):
 
     path_pdf = "GUIDE_SOMMAIRE.pdf"
 
+    logger.info("Avant l'appel à générate prompt")
     response = generate_prompt(
         question.prompt, path_pdf, question.conversation, question.canal
     )
+    logger.info("Après l'appel à générate prompt")
 
     return response
 

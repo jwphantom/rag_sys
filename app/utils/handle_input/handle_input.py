@@ -9,6 +9,12 @@ from app.utils.mail.content import clean_and_format_content
 
 from app.schema.question import Question as SchemaQuestion
 
+import logging
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 async def handle_input(content):
     new_request, history, parts = clean_and_format_content(content)
@@ -20,7 +26,9 @@ async def handle_input(content):
 
     if len(parts) < 2:
         if handle_greeting_and_how_are_you(new_request):
+            logger.info("Avant l'appel à reponse greeting < 2")
             response = handle_greeting_and_how_are_you(new_request)
+            logger.info("Après l'appel à reponse greeting < 2")
             mail = True
 
         if handle_response_confirmation_informations(new_request):
@@ -30,7 +38,10 @@ async def handle_input(content):
             response = "Stop"
 
         else:
+            mail = True
+            logger.info("Avant l'appel à reponse chat < 2")
             response = await chat(question)
+            logger.info("Avant l'appel à reponse chat < 2")
 
     else:
 
