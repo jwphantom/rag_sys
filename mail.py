@@ -1,16 +1,26 @@
-import asyncio
-import aiohttp
-from aioimaplib import aioimaplib
+import base64
+import smtplib
+import ssl
+import time
+import requests
+from imapclient import IMAPClient
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import email
-from app.utils.mail.content import decode_mime_words
-from app.utils.mail.reply import reply_mail
-from app.utils.handle_input.handle_input import handle_input
+
+import email.utils
+
 import os
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+from app.utils.mail.content import (
+    decode_mime_words,
+)
+from app.utils.mail.token import get_access_token
+from app.utils.mail.reply import reply_mail
+from app.utils.handle_input.handle_input import handle_input
+
+import asyncio
 
 username = os.getenv("USERNAME")
 tenant_id = os.getenv("TOKEN_ID")
@@ -18,85 +28,97 @@ client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 refresh_token = os.getenv("REFRESH_TOKEN")
 smtp_password = os.getenv("SMTP_PASSWORD")
-token_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
 
 
-async def get_access_token():
-    async with aiohttp.ClientSession() as session:
-        data = {
-            "client_id": client_id,
-            "scope": "https://outlook.office365.com/.default",
-            "refresh_token": refresh_token,
-            "grant_type": "refresh_token",
-            "client_secret": client_secret,
-        }
-        async with session.post(token_url, data=data) as response:
-            if response.status == 200:
-                tokens = await response.json()
-                return tokens["access_token"]
-            else:
-                logger.error(f"Error: {response.status}")
-                logger.error(await response.json())
-                return None
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+allowed_domains = ["yahoo.com", "icloud.com", "hotmail.com", "gmail.com"]
+
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+allowed_domains = ["yahoo.com", "icloud.com", "hotmail.com", "gmail.com"]
 
 
 async def mail_job():
-    while True:
-        try:
-            access_token = await get_access_token()
-            if not access_token:
-                await asyncio.sleep(60)
-                continue
+    access_token = get_access_token(tenant_id, client_id, client_secret, refresh_token)
 
-            imap_client = aioimaplib.IMAP4_SSL("outlook.office365.com")
-            await imap_client.wait_hello_from_server()
-            await imap_client.login(username, access_token)
-            await imap_client.select("INBOX")
+    # Paramètres IMAP
+    IMAP_SERVER = "outlook.office365.com"
 
-            today = datetime.now().strftime("%d-%b-%Y")
-            _, messages = await imap_client.search(f'(SINCE "{today}" UNSEEN)')
+    try:
+        with IMAPClient(IMAP_SERVER, ssl=True) as client:
+            client.oauth2_login(username, access_token)
+            logger.info("Connexion réussie!")
 
-            for num in messages[0].split():
-                _, msg_data = await imap_client.fetch(num, "(RFC822)")
-                email_body = msg_data[0][1]
-                email_message = email.message_from_bytes(email_body)
+            client.select_folder("INBOX")
 
-                from_address = email_message["From"]
-                if "olongowilliam@gmail.com" in from_address:
-                    subject = decode_mime_words(
-                        email_message["Subject"] or "Pas de sujet"
-                    )
-                    logger.info(f"De : {from_address}")
-                    logger.info(f"Sujet : {subject}")
-                    logger.info(f"Date : {email_message['Date']}")
+            # Obtenir la date d'aujourd'hui à minuit
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_str = today.strftime("%d-%b-%Y")
 
-                    result = await handle_input(email_message)
+            while True:
+                # Rechercher les emails de la journée
+                search_criteria = ["SINCE", today_str, "UNSEEN"]
+                messages = client.search(search_criteria)
 
-                    reply_body = f"{result['response']}\n{result['history']}"
+                # Trier les messages du plus récent au plus ancien
+                messages.sort(reverse=True)
 
-                    await reply_mail(
-                        username,
-                        smtp_password,
-                        from_address,
-                        subject,
-                        email_message["Message-ID"],
-                        email_message["References"],
-                        reply_body,
+                # Afficher les messages de la journée
+                for msg_id in messages:
+                    msg_data = client.fetch([msg_id], ["ENVELOPE", "RFC822"])
+                    envelope = msg_data[msg_id][b"ENVELOPE"]
+                    email_message = email.message_from_bytes(
+                        msg_data[msg_id][b"RFC822"]
                     )
 
-                    logger.info(f"Reply: \n {result['response']} ")
-                    logger.info("=" * 40)
+                    from_address = (
+                        envelope.from_[0].mailbox.decode()
+                        + "@"
+                        + envelope.from_[0].host.decode()
+                    )
 
-                    await imap_client.store(num, "+FLAGS", "\\Seen")
-                else:
-                    logger.debug(f"Email ignoré : {from_address}")
+                    if from_address == "olongowilliam@gmail.com":
+                        subject = decode_mime_words(
+                            envelope.subject.decode()
+                            if envelope.subject
+                            else "Pas de sujet"
+                        )
+                        logger.info(f"De : {envelope.from_[0].name} <{from_address}>")
+                        logger.info(f"Sujet : {subject}")
+                        logger.info(f"Date : {envelope.date}")
 
-            await imap_client.logout()
-            await asyncio.sleep(10)
+                        result = await handle_input(email_message)
 
-        except asyncio.CancelledError:
-            logger.info("Tâche mail_job annulée")
-            break
-        except Exception as e:
-            logger.error(f"Erreur dans mail_job: {str(e)}")
-            await asyncio.sleep(60)
+                        # Prepare the reply body
+                        reply_body = f"{result['response']}\n"
+                        reply_body += result["history"]
+
+                        # Send the reply
+                        reply_mail(
+                            username,
+                            smtp_password,
+                            from_address,
+                            subject,
+                            email_message["Message-ID"],
+                            email_message["References"],
+                            reply_body,
+                        )
+
+                        logger.info(f"Reply: \n {result['response']} ")
+                        logger.info("=" * 40)
+
+                        client.add_flags([msg_id], [r"\Seen"])
+                    else:
+                        logger.debug(f"Email ignoré : {from_address}")
+
+                await asyncio.sleep(10)
+
+    except Exception as e:
+        logger.error(f"Erreur détaillée: {str(e)}")
