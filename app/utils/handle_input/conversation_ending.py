@@ -27,7 +27,7 @@ def handle_conversation_ending(message):
 
     def is_end_of_conversation(message, threshold=80):
         for end_phrase in end_conversations:
-            similarity = fuzz.partial_ratio(end_phrase.lower(), message.lower())
+            similarity = fuzz.ratio(end_phrase.lower(), message.lower())
             if similarity >= threshold:
                 return True
         return False

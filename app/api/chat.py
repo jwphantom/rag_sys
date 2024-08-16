@@ -23,11 +23,9 @@ async def chat(question: SchemaQuestion):
 
     path_pdf = "GUIDE_SOMMAIRE.pdf"
 
-    logger.info("Avant l'appel à générate prompt")
     response = generate_prompt(
         question.prompt, path_pdf, question.conversation, question.canal
     )
-    logger.info("Après l'appel à générate prompt")
 
     return response
 

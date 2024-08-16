@@ -28,7 +28,7 @@ def handle_response_confirmation_informations(message):
 
     def is_confirmation(message, threshold=80):
         for confirm in confirm_informations:
-            similarity = fuzz.partial_ratio(confirm.lower(), message.lower())
+            similarity = fuzz.ratio(confirm.lower(), message.lower())
             if similarity >= threshold:
                 return True
         return False
