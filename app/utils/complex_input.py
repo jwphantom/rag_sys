@@ -85,13 +85,10 @@ def generate_prompt(input, pdf_path, history, canal):
 
     logger.info(f"formatted prompt passée ")
 
-    responses = llm.invoke(formatted_prompt)
-
-    if responses is not None:
-        logger.info("réponses généré ")
-
-        logger.info(f"reponses passée \n {responses}")
-
-    logger.info(f"reponses passée")
+    try:
+        responses = llm.invoke(formatted_prompt)
+    except Exception as e:
+        logger.error(f"Erreur lors de l'invocation du modèle : {str(e)}")
+        return "Je suis désolé, il y a eu une erreur dans la génération de la réponse."
 
     return responses.content
