@@ -88,6 +88,7 @@ def generate_prompt(input, pdf_path, history, canal):
     try:
         responses = llm.invoke(formatted_prompt)
     except Exception as e:
+        logger.info(responses)
         logger.error(f"Erreur lors de l'invocation du modèle : {str(e)}")
         return "Je suis désolé, il y a eu une erreur dans la génération de la réponse."
 
