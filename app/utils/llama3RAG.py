@@ -14,12 +14,6 @@ from langchain.retrievers import EnsembleRetriever
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 
-import logging
-
-# Configuration du logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 # Setup for embedding and LLM
 def setup_embedding_and_llm():
@@ -27,13 +21,7 @@ def setup_embedding_and_llm():
 
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.2, top_p=0.2)
 
-    if llm is not None:
-        logger.info("configuration du modèle LLM reussi")
-
     embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-
-    if embedding is not None:
-        logger.info("configuration du modèle LLM reussi")
 
     return llm, embedding
 
