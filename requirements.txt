@@ -17,3 +17,5 @@ IMAPClient==3.0.1
 gpt4all==2.7.0
 aiohttp==3.10.3
 aioimaplib==1.1.0
+PyMuPDF==1.24.5
+PyMuPDFb==1.24.3
