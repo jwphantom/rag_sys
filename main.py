@@ -5,11 +5,28 @@ from app.schema.question import Question as SchemaQuestion
 import os
 from dotenv import load_dotenv
 import asyncio
-from mail import main as mail_job
+from contextlib import asynccontextmanager
+from mail import (
+    mail_job,
+)  # Assurez-vous que ce fichier existe avec la fonction mail_job
 
 load_dotenv()
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Démarrage
+    mail_task = asyncio.create_task(mail_job())
+    yield
+    # Nettoyage
+    mail_task.cancel()
+    try:
+        await mail_task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Configuration CORS
 app.add_middleware(
@@ -24,18 +41,13 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 
-@app.on_event("startup")
-async def start_background_task():
-    asyncio.create_task(mail_job())
-
-
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the API"}
 
 
 @app.get("/home")
-async def read_root():
+async def read_home():
     return {"message": "Welcome to the API"}
 
 
