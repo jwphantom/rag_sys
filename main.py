@@ -5,7 +5,10 @@ from app.schema.question import Question as SchemaQuestion
 import os
 from dotenv import load_dotenv
 import asyncio
-from mail import main as mail_job
+from mail import mail_job
+
+from contextlib import asynccontextmanager
+import asyncio
 
 load_dotenv()
 
@@ -24,9 +27,21 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 
-@app.on_event("startup")
-async def start_background_task():
-    asyncio.create_task(mail_job())
+# Utilisation de l'événement lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Code à exécuter au démarrage
+    task = asyncio.create_task(mail_job())
+    yield
+    # Code à exécuter à la fermeture
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
