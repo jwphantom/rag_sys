@@ -48,9 +48,6 @@ def generate_prompt(input, pdf_path, history, canal):
     # Générer le prompt formaté
     formatted_prompt = prompt.format(history=history, context=context, question=input)
 
-    logger.info("avant llm")
-    responses = llm.generate_prompt(formatted_prompt)
+    responses = llm.invoke(formatted_prompt)
 
-    logger.info("après llm")
-
-    return responses.content
+    return responses
