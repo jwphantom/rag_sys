@@ -8,13 +8,35 @@ from app.utils.llama3RAG import (
 
 from langchain.prompts import PromptTemplate
 
+import logging
+
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def generate_prompt(input, pdf_path, history, canal):
 
     llm, _ = setup_embedding_and_llm()
 
+    if llm is None:
+        logger.error("Échec de la configuration du modèle LLM")
+        return "Je suis désolé, je ne peux pas générer de réponse pour le moment."
+
     retriever = create_hybrid_retriever(pdf_path)
+
+    if retriever is None:
+        logger.error("Échec de la création du hybrid retriever.")
+        return (
+            "Je suis désolé, je n'ai pas pu initialiser le récupérateur de documents."
+        )
+
     docs = retriever.invoke(input)
+
+    if docs is None or len(docs) == 0:
+        logger.error("Aucun document trouvé par le retriever")
+        return "Je suis désolé, je n'ai pas pu trouver d'informations pertinentes."
+
     context = "\n".join([doc.page_content for doc in docs])
 
     # Template pour le prompt
@@ -60,9 +82,21 @@ def generate_prompt(input, pdf_path, history, canal):
         template=template,
     )
 
+    if prompt is None:
+        logger.error("Échec de la création du PromptTemplate.")
+        return "Je suis désolé, je n'ai pas pu formater le prompt correctement."
+
     # Générer le prompt formaté
     formatted_prompt = prompt.format(history=history, context=context, question=input)
 
+    if formatted_prompt is None or formatted_prompt.strip() == "":
+        logger.error("Le prompt formaté est vide ou invalide.")
+        return "Je suis désolé, il y a eu une erreur dans la génération du prompt."
+
     responses = llm.invoke(formatted_prompt)
+
+    if responses is None or responses.content.strip() == "":
+        logger.error("La réponse du modèle est None ou vide.")
+        return "Je suis désolé, il y a eu une erreur dans la génération de la réponse."
 
     return responses.content
