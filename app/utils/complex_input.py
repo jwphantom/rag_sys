@@ -1,5 +1,5 @@
 from langchain_community.vectorstores import Chroma
-from app.utils.llama3RAG import (
+from app.utils.setupRAG import (
     create_retriever,
     load_and_split_document,
     setup_embedding_and_llm,
