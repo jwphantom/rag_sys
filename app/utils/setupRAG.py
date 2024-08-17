@@ -1,6 +1,8 @@
 from langchain_community.embeddings import GPT4AllEmbeddings
 
 from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_groq import ChatGroq
@@ -21,7 +23,7 @@ def setup_embedding_and_llm():
 
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
 
-    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")
+    embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     return llm, embedding
 
