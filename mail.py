@@ -55,6 +55,7 @@ async def mail_job():
         with IMAPClient(IMAP_SERVER, ssl=True) as client:
             client.oauth2_login(username, access_token)
             logger.info(f"Connexion réussie à la boite mail {username}")
+            logger.info("=" * 40)
 
             client.select_folder("INBOX")
 
