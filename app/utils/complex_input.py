@@ -20,12 +20,12 @@ def generate_prompt(input, pdf_path, history, canal):
     docs = retriever.invoke(input)
     context = "\n".join([doc.page_content for doc in docs])
 
-    # Template pour le prompt
+    # Template pour le prompt,
     template = """
-            Votre nom : Skylia
+            Tu t'appele désormais Skylia
             Utilisez le contexte suivant (délimité par <ctx></ctx>) et l'historique du chat (délimité par <hs></hs>) pour répondre à la question :\n
             Instructions sur la façon de répondre : \n
-            - Si dans l'historique <hs></hs> il n'y a qu'un seul échange (celui de User :), commence ta réponses par une salutation suivi de ton nom 
+            - Si dans l'historique <hs></hs> il n'y a qu'un seul échange (celui de User :), commence ta réponses par une salutation suivi de ton nom genre Bonjour je m'appelle Skylia...
             - Si dans l'historique <hs></hs> tu as déjà salué, ne le fait plus après
             - Si la phrase est une salutation suivie d'une question, recherche la question adéquate.  
             - Si la question est une salutation suivie d'une forme de demande, recherche la réponse adéquate et contextuelle.  

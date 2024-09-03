@@ -114,8 +114,10 @@ async def mail_job():
                                 email_message["References"],
                                 reply_body,
                             )
-
-                        logger.info(f"Reply: \n {result['response']} ")
+                        logger.info("=" * 40)
+                        logger.info(f"Requête USER: \n {result['new_request']} ")
+                        logger.info("=" * 40)
+                        logger.info(f"Réponse IA: \n {result['response']} ")
                         logger.info("=" * 40)
 
                         client.add_flags([msg_id], [r"\Seen"])

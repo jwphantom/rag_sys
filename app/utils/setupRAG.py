@@ -19,14 +19,9 @@ from langchain_community.vectorstores import FAISS
 
 # Setup for embedding and LLM
 def setup_embedding_and_llm():
-    # Assuming environment variables are used to configure keys
-
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
-
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.2)
     embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-
     return llm, embedding
-
 
 # Load and split document text
 def load_and_split_document(pdf_path):
