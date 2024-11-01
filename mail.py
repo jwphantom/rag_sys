@@ -25,7 +25,7 @@ import asyncio
 username = os.getenv("USERNAME")
 tenant_id = os.getenv("TOKEN_ID")
 client_id = os.getenv("CLIENT_ID")
-client_secret = os.getenv("CLIENT_SECRET")
+client_secret = os.getenv("AZURE_SECRET")
 refresh_token = os.getenv("REFRESH_TOKEN")
 smtp_password = os.getenv("SMTP_PASSWORD")
 
@@ -85,44 +85,43 @@ async def mail_job():
                         + envelope.from_[0].host.decode()
                     )
 
-                    if from_address == "olongowilliam@gmail.com":
-                        subject = decode_mime_words(
-                            envelope.subject.decode()
-                            if envelope.subject
-                            else "Pas de sujet"
+                    subject = decode_mime_words(
+                        envelope.subject.decode()
+                        if envelope.subject
+                        else "Pas de sujet"
+                    )
+                    logger.info(f"De : {envelope.from_[0].name} <{from_address}>")
+                    logger.info(f"Sujet : {subject}")
+                    logger.info(f"Date : {envelope.date}")
+
+                    result = await handle_input(email_message)
+
+                    # Prepare the reply body
+                    reply_body = f"{result['response']}\n"
+                    reply_body += result["history"]
+
+                    # Send the reply
+                    if (result["response"] != "Stop") or (
+                        result["response"] != "ENDCONV"
+                    ):
+                        reply_mail(
+                            username,
+                            smtp_password,
+                            from_address,
+                            subject,
+                            email_message["Message-ID"],
+                            email_message["References"],
+                            reply_body,
                         )
-                        logger.info(f"De : {envelope.from_[0].name} <{from_address}>")
-                        logger.info(f"Sujet : {subject}")
-                        logger.info(f"Date : {envelope.date}")
+                    logger.info("=" * 40)
+                    logger.info(f"Requête USER: \n {result['new_request']} ")
+                    logger.info("=" * 40)
+                    logger.info(f"Réponse IA: \n {result['response']} ")
+                    logger.info("=" * 40)
 
-                        result = await handle_input(email_message)
-
-                        # Prepare the reply body
-                        reply_body = f"{result['response']}\n"
-                        reply_body += result["history"]
-
-                        # Send the reply
-                        if (result["response"] != "Stop") or (
-                            result["response"] != "ENDCONV"
-                        ):
-                            reply_mail(
-                                username,
-                                smtp_password,
-                                from_address,
-                                subject,
-                                email_message["Message-ID"],
-                                email_message["References"],
-                                reply_body,
-                            )
-                        logger.info("=" * 40)
-                        logger.info(f"Requête USER: \n {result['new_request']} ")
-                        logger.info("=" * 40)
-                        logger.info(f"Réponse IA: \n {result['response']} ")
-                        logger.info("=" * 40)
-
-                        client.add_flags([msg_id], [r"\Seen"])
-                    else:
-                        logger.debug(f"Email ignoré : {from_address}")
+                    client.add_flags([msg_id], [r"\Seen"])
+                else:
+                    logger.debug(f"Email ignoré : {from_address}")
 
                 await asyncio.sleep(10)
 
