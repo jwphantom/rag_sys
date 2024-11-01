@@ -11,7 +11,7 @@ from email.utils import formataddr, parseaddr
 
 from app.utils.handle_input.handle_string import add_newlines_before_names
 
-username = os.getenv("USERNAME")
+username = os.environ.get("USERNAME")
 
 
 def decode_mime_words(s):
@@ -44,17 +44,26 @@ def clean_and_format_content(email_message):
 
     single_line = re.sub(r"\s+", " ", content)
 
-    parts = re.split(r"(?=On \w{3}, \d{1,2} \w{3} \d{4})", single_line)
+    parts = re.split(
+        r"(?=(?:On|Le) (?:\w{3},|\w{3}\.) \d{1,2} (?:\w{3}|\w{3}\.) \d{4})", single_line
+    )
 
     # Remove empty elements from parts
     parts = [part.strip() for part in parts if part.strip()]
 
     new_response = ""
 
-    if (not (parts and re.match(r"On .+wrote:", parts[0]))) and (len(parts) == 1):
+    if (
+        not (
+            parts
+            and re.match(r"(?:On|Le) .+(?:wrote|a écrit) ?:", parts[0], re.IGNORECASE)
+        )
+    ) and (len(parts) == 1):
         return single_line, f"User: {single_line}", parts
 
-    if not (parts and re.match(r"On .+wrote:", parts[0])):
+    if not (
+        parts and re.match(r"(?:On|Le) .+(?:wrote|a écrit) ?:", parts[0], re.IGNORECASE)
+    ):
         new_response = parts[0]
         single_line = " ".join(parts[1:])
 
@@ -84,9 +93,11 @@ def clean_and_format_content(email_message):
             formatted_replies.append(formatted_reply)
 
         # Clean spaces and replace email addresses
+
         clean_replies = []
         for reply in formatted_replies:
             clean_reply = reply.strip()
+
             clean_reply = re.sub(
                 r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
                 lambda m: "Skylia" if m.group() == username else "User",
@@ -115,3 +126,19 @@ def clean_and_format_content(email_message):
         return new_response, add_newlines_before_names(single_string), parts
     else:
         return new_response, f"User: {single_line}", parts
+
+
+# mail="""
+# Hotesse de l'air
+
+
+# Le jeu. 10 oct. 2024 à 03:06, <campus@irdsm-aviation.com> a écrit :
+
+# > Oui, nous proposons plusieurs formations. Pourriez-vous nous dire quelle
+# > formation vous intéresse ?
+# >
+# > User: J'aimerais savoir si C'etait possible de faire une formation chez
+# > vous
+# """
+
+# new_request, history, parts = clean_and_format_content(mail)
