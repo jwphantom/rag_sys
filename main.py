@@ -28,9 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inclusion du router
-app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
-
 
 # Utilisation de l'événement lifespan
 @asynccontextmanager
@@ -63,3 +60,7 @@ async def read_root():
 @app.post("/")
 async def home(question: SchemaQuestion):
     return await chat.home(question)
+
+
+# Inclusion du router
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])

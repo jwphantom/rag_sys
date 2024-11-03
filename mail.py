@@ -3,6 +3,7 @@ import smtplib
 import ssl
 import time
 import requests
+from app.utils.ssl.secure import SecureIMAPConnection
 from imapclient import IMAPClient
 import logging
 from datetime import datetime, timedelta
@@ -51,9 +52,12 @@ async def mail_job():
     # Paramètres IMAP
     IMAP_SERVER = "outlook.office365.com"
 
+    imap_connection = SecureIMAPConnection(
+        host="outlook.office365.com", username=username, logger=logger
+    )
+
     try:
-        with IMAPClient(IMAP_SERVER, ssl=True) as client:
-            client.oauth2_login(username, access_token)
+        with imap_connection.connect(access_token) as client:
             logger.info(f"Connexion réussie à la boite mail {username}")
             logger.info("=" * 40)
 
@@ -71,57 +75,59 @@ async def mail_job():
                 # Trier les messages du plus récent au plus ancien
                 messages.sort(reverse=True)
 
-                # Afficher les messages de la journée
-                for msg_id in messages:
-                    msg_data = client.fetch([msg_id], ["ENVELOPE", "RFC822"])
-                    envelope = msg_data[msg_id][b"ENVELOPE"]
-                    email_message = email.message_from_bytes(
-                        msg_data[msg_id][b"RFC822"]
-                    )
-
-                    from_address = (
-                        envelope.from_[0].mailbox.decode()
-                        + "@"
-                        + envelope.from_[0].host.decode()
-                    )
-
-                    subject = decode_mime_words(
-                        envelope.subject.decode()
-                        if envelope.subject
-                        else "Pas de sujet"
-                    )
-                    logger.info(f"De : {envelope.from_[0].name} <{from_address}>")
-                    logger.info(f"Sujet : {subject}")
-                    logger.info(f"Date : {envelope.date}")
-
-                    result = await handle_input(email_message)
-
-                    # Prepare the reply body
-                    reply_body = f"{result['response']}\n"
-                    reply_body += result["history"]
-
-                    # Send the reply
-                    if (result["response"] != "Stop") or (
-                        result["response"] != "ENDCONV"
-                    ):
-                        reply_mail(
-                            username,
-                            smtp_password,
-                            from_address,
-                            subject,
-                            email_message["Message-ID"],
-                            email_message["References"],
-                            reply_body,
-                        )
-                    logger.info("=" * 40)
-                    logger.info(f"Requête USER: \n {result['new_request']} ")
-                    logger.info("=" * 40)
-                    logger.info(f"Réponse IA: \n {result['response']} ")
-                    logger.info("=" * 40)
-
-                    client.add_flags([msg_id], [r"\Seen"])
+                if not messages:
+                    logger.debug("Aucun nouveau message trouvé")
                 else:
-                    logger.debug(f"Email ignoré : {from_address}")
+                    print("fff")
+                    # Afficher les messages de la journée
+                    for msg_id in messages:
+                        msg_data = client.fetch([msg_id], ["ENVELOPE", "RFC822"])
+                        envelope = msg_data[msg_id][b"ENVELOPE"]
+                        email_message = email.message_from_bytes(
+                            msg_data[msg_id][b"RFC822"]
+                        )
+
+                        from_address = (
+                            envelope.from_[0].mailbox.decode()
+                            + "@"
+                            + envelope.from_[0].host.decode()
+                        )
+
+                        subject = decode_mime_words(
+                            envelope.subject.decode()
+                            if envelope.subject
+                            else "Pas de sujet"
+                        )
+                        logger.info(f"De : {envelope.from_[0].name} <{from_address}>")
+                        logger.info(f"Sujet : {subject}")
+                        logger.info(f"Date : {envelope.date}")
+
+                        result = await handle_input(email_message)
+
+                        # Prepare the reply body
+                        reply_body = f"{result['response']}\n"
+                        reply_body += result["history"]
+
+                        # Send the reply
+                        if (result["response"] != "Stop") or (
+                            result["response"] != "ENDCONV"
+                        ):
+                            reply_mail(
+                                username,
+                                smtp_password,
+                                from_address,
+                                subject,
+                                email_message["Message-ID"],
+                                email_message["References"],
+                                reply_body,
+                            )
+                        logger.info("=" * 40)
+                        logger.info(f"Requête USER: \n {result['new_request']} ")
+                        logger.info("=" * 40)
+                        logger.info(f"Réponse IA: \n {result['response']} ")
+                        logger.info("=" * 40)
+
+                        client.add_flags([msg_id], [r"\Seen"])
 
                 await asyncio.sleep(10)
 

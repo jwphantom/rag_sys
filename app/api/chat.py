@@ -23,6 +23,8 @@ async def chat(question: SchemaQuestion):
 
     path_pdf = "GUIDE_SOMMAIRE.pdf"
 
+    print(question.conversation)
+
     response = generate_prompt(
         question.prompt, path_pdf, question.conversation, question.canal
     )
